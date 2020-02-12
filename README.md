@@ -44,3 +44,7 @@ SignatureHelper.SetHmacHeaders(request, "YOUR_APPLICATION_ID", "YOUR_SECRET_KEY"
 2. Bump the version in the nuspec file
 3. Use CMD in project dir and run `.\nuget.exe pack -Prop Configuration=Release`
 4. Run `.\nuget.exe push {package file} {apikey} -Source {nuget server url}`
+
+# Use package from Nuget
+https://www.nuget.org/packages/CaptainAndrey.HMACAuthentication/
+
