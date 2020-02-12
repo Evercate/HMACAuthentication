@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>CaptainAndrey.HMACAuthentication</id>
+    <version>1.0.8</version>
+    <title>HMAC</title>
+    <authors>Andrey Krichtal</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>HMAC authentication implementation</description>
+    <releaseNotes>Initial Release</releaseNotes>
+    <copyright></copyright>
+    <tags>HMAC Authentication</tags>
+	<dependencies>
+        <group>
+			<dependency id="Microsoft.AspNetCore.Authentication" version="2.2.0" />
+			<dependency id="Microsoft.Extensions.Caching.Memory" version="3.1.1" />
+        </group>
+    </dependencies>
+  </metadata>
+</package>
