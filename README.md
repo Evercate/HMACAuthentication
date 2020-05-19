@@ -1,21 +1,34 @@
 # Usage
 ## Server
 ```csharp
-services.AddMemoryCache();
-services.AddAuthentication(options =>
+public void ConfigureServices(IServiceCollection services)
 {
-    options.DefaultScheme = "HMAC";
-}).AddHMACAuthentication();
-
-services.AddAuthorization(options =>
-{
-    options.AddPolicy("AuthenticationRequired", policy =>
+    services.AddMemoryCache();
+    services.AddAuthentication(options =>
     {
-        policy.RequireAuthenticatedUser();
-    });
-});
+        options.DefaultScheme = "HMAC";
+    }).AddHMACAuthentication();
 
-services.AddScoped<ISecretLookup, YOUR_IMPLEMENTATION>();
+    services.AddAuthorization(options =>
+    {
+        options.AddPolicy("AuthenticationRequired", policy =>
+        {
+            policy.RequireAuthenticatedUser();
+        });
+    });
+
+    services.AddScoped<ISecretLookup, YOUR_IMPLEMENTATION>();
+    
+    ...
+}
+
+public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+{
+    app.UseAuthentication();
+    app.UseAuthorization();
+    
+    ...
+}
 
 ```
 ## Example ISecretLookup implementation
