@@ -61,3 +61,79 @@ SignatureHelper.SetHmacHeaders(request, "YOUR_APPLICATION_ID", "YOUR_SECRET_KEY"
 # Use package from Nuget
 https://www.nuget.org/packages/CaptainAndrey.HMACAuthentication/
 
+
+-----------------------------------
+
+# Manual use from Postman
+1. Create a collection in Postman
+2. Click edit on your collection
+3. On tab Pre-request Scripts add the script below
+4. Save
+5. Go to Headers tab for the call
+6. Add the following
+    * Authorization: {{hmacAuthHeader}}
+    * Nonce: {{nonce}}
+    * Date: {{date}}
+7. Open your Environment and add the following variables
+    * clientKey: *your hmac key*
+    * clientSecret: *your hmac secret*
+
+*Future improvements*: Handle more different key/secret pairs for different services (see if we can mix in local variables in postman)
+
+The script to add on step 3
+```js
+function generate(requestDate, content, method, path, query, nonce) {
+    return (requestDate.toUTCString() + '\n' +
+        content + '\n' +
+        method + '\n' +
+        path + '\n' +
+        nonce + '\n' +
+        query).toLowerCase();
+}
+
+function uuidv4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+function getPath(url) {
+    var pathRegex = /.+?\:\/\/.+?(\/.+?)(?:#|\?|$)/;
+    var result = url.match(pathRegex);
+    return result && result.length > 1 ? result[1] : '';
+}
+
+function getQueryString(url) {
+    var arrSplit = url.split('?');
+    return arrSplit.length > 1 ? url.substring(url.indexOf('?') + 1) : '';
+}
+
+function getAuthHeader(httpMethod, requestUrl, requestBody) {
+    var CLIENT_KEY = pm.variables.get("clientKey");
+    var SECRET_KEY = pm.variables.get("clientSecret");
+    var AUTH_TYPE = 'HMAC';
+
+    var requestPath = getPath(requestUrl);
+    var queryString = getQueryString(requestUrl);
+    if (httpMethod == 'GET' || !requestBody) {
+        requestBody = '';
+    }
+
+    var date = new Date();
+    pm.variables.set('date', date.toUTCString());
+    var nonce = uuidv4();
+    pm.variables.set('nonce', nonce);
+    var signature = generate(date, requestBody, httpMethod.toLowerCase(), requestPath, queryString, nonce);
+
+    utfSignature = CryptoJS.enc.Utf8.parse(signature);
+    hmacDigest = CryptoJS.enc.Base64.stringify(CryptoJS.HmacSHA256(utfSignature, SECRET_KEY));
+
+    var authHeader = AUTH_TYPE + ' ' + CLIENT_KEY + ':' + hmacDigest;
+    return authHeader;
+}
+
+pm.variables.set('hmacAuthHeader', getAuthHeader(request['method'], request['url'], request['data']));
+
+
+````
