@@ -116,7 +116,7 @@ function getAuthHeader(httpMethod, requestUrl, requestBody) {
 
     var requestPath = getPath(requestUrl);
     var queryString = getQueryString(requestUrl);
-    if (httpMethod == 'GET' || !requestBody) {
+    if (!requestBody || Object.keys(requestBody).length === 0) {
         requestBody = '';
     }
 
