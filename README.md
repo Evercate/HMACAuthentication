@@ -59,7 +59,7 @@ SignatureHelper.SetHmacHeaders(request, "YOUR_APPLICATION_ID", "YOUR_SECRET_KEY"
 4. Run `.\nuget.exe push {package file} {apikey} -Source {nuget server url}`
 
 # Use package from Nuget
-https://www.nuget.org/packages/CaptainAndrey.HMACAuthentication/
+https://www.nuget.org/packages/Evercate.HMACAuthentication
 
 
 -----------------------------------
