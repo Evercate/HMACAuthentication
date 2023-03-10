@@ -78,8 +78,6 @@ https://www.nuget.org/packages/Evercate.HMACAuthentication
     * clientKey: *your hmac key*
     * clientSecret: *your hmac secret*
 
-*Future improvements*: Handle more different key/secret pairs for different services (see if we can mix in local variables in postman)
-
 The script to add on step 3
 ```js
 function generate(requestDate, content, method, path, query, nonce) {
@@ -110,9 +108,46 @@ function getQueryString(url) {
 }
 
 function getAuthHeader(httpMethod, requestUrl, requestBody) {
-    var CLIENT_KEY = pm.variables.get("clientKey");
-    var SECRET_KEY = pm.variables.get("clientSecret");
+
+    var ENVIRONMENT_HMAC_PREFIX_KEY = pm.variables.get("clientHmacPrefix");
+
+    var CLIENT_KEY = null;
+    var SECRET_KEY = null;
     var AUTH_TYPE = 'HMAC';
+
+    var clientKeyVariableName = "clientKey";
+    var clientSecretVariableName = "clientSecret";
+
+    if(ENVIRONMENT_HMAC_PREFIX_KEY != null)
+    {
+        var prefixedClientKey = ENVIRONMENT_HMAC_PREFIX_KEY + clientKeyVariableName;
+        var prefixedSecretKey = ENVIRONMENT_HMAC_PREFIX_KEY + clientSecretVariableName;
+
+        console.log("The clientHmacPrefix '" + ENVIRONMENT_HMAC_PREFIX_KEY + "' was found, looking up '" + prefixedClientKey + "' and '" + prefixedSecretKey + "'");
+
+        CLIENT_KEY = pm.variables.get(prefixedClientKey);
+        SECRET_KEY = pm.variables.get(prefixedSecretKey);
+
+        if(CLIENT_KEY == null || SECRET_KEY == null)
+        {
+            console.log("No variables found with the names of " + prefixedClientKey + "/" + prefixedSecretKey + ". We will look up keys with the default names");
+        }
+    }
+
+    if(CLIENT_KEY == null || SECRET_KEY == null)
+    {
+        CLIENT_KEY = pm.variables.get(clientKeyVariableName);
+        SECRET_KEY = pm.variables.get(clientSecretVariableName);
+
+        console.log("We fetched the key/secret with " + clientKeyVariableName + "/" + clientSecretVariableName + " variable names. Key was: '" + CLIENT_KEY + "' and secret was: '" + SECRET_KEY + "'")
+    }
+
+    if(CLIENT_KEY == null || SECRET_KEY == null)
+    {
+        console.error("No key/secret pair was found. Make sure you have " + clientKeyVariableName + " and " + clientSecretVariableName + "as variables (environment or otherwise). Note you can also have a prefix to have multiple variables in the same environment");
+        throw new Error("Missing key/secret see console for more");
+    }
+
 
     var requestPath = getPath(requestUrl);
     var queryString = getQueryString(requestUrl);
@@ -136,4 +171,49 @@ function getAuthHeader(httpMethod, requestUrl, requestBody) {
 pm.variables.set('hmacAuthHeader', getAuthHeader(request['method'], request['url'], request['data']));
 
 
+````
+
+#### Multiple keys in one environment
+The code above will check in the environment *clientHmacPrefix* and if it's found it will try to use that prefix on the clientKey/clientSecret so it will instead look for myprefix.clientKey/myprefix.clientSecret if the *clientHmacPrefix* is set to "myprefix.". Note that the period is not automatically placed, if you wish a period in your prefix you have to set it in your prefix.
+
+To not have manually update the prefix when working with multiple services you can automate this by setting a pre-request script either on a subfolder (under the collection that holds the main pre-request script) or directly on each request.
+
+Here is the script to automate setting the *clientHmacPrefix*
+**Note:** For each place you put this code you need to change the top line to your desired prefix.
+```js
+//Only change this top line to change prefix
+var clientHmacPrefix = 'myprefix.';
+
+pm.variables.set('changedClientHmacPrefix', false);
+var currentHmacPrefix = pm.environment.get('clientHmacPrefix');
+
+if(clientHmacPrefix != currentHmacPrefix)
+{
+    pm.environment.set('clientHmacPrefix', clientHmacPrefix);
+    pm.variables.set('changedClientHmacPrefix', true);
+
+    if(currentHmacPrefix == null)
+    {
+        console.log("No clientHmacPrefix environment variable found, setting new clientHmacPrefix to: '"+clientHmacPrefix+"'");
+    }
+    else
+    {
+        console.log("Current clientHmacPrefix environment variable is '" + currentHmacPrefix + "' we are changing it to: '"+clientHmacPrefix+"'");
+    }
+
+    console.log("We had the wrong clientHmacPrefix, we set it correctly now but you have to rerun this query!");
+}
+````
+
+Since pre-request scripts runs from outermost folder first we sadly cannot stop it running once on the wrong clientHmacPrefix everytime we go to a new service. It should be noted we tried to throw exception on the pre-request script above if we detected a different clientHmacPrefix than we desired. But then it never saved the value to the environment.
+Instead we have stored a variable named changedClientHmacPrefix if we detected so on each folder/request where we put the above script to set the *clientHmacPrefix* we can also add a simple test script that looks if we changed the value and then warns us to rerun the request again.
+
+```js
+var changed = pm.variables.get('changedClientHmacPrefix');
+pm.variables.set('changedClientHmacPrefix', false);
+
+if(changed === true)
+{
+    throw new Error("Rerun this query. See console for why.");
+}
 ````
