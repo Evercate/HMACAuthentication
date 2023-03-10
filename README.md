@@ -178,7 +178,6 @@ The code above will check in the environment *clientHmacPrefix* and if it's foun
 
 To not have manually update the prefix when working with multiple services you can automate this by setting a pre-request script either on a subfolder (under the collection that holds the main pre-request script) or directly on each request.
 
-Here is the script to automate setting the *clientHmacPrefix*
 **Note:** For each place you put this code you need to change the top line to your desired prefix.
 ```js
 //Only change this top line to change prefix
@@ -205,8 +204,9 @@ if(clientHmacPrefix != currentHmacPrefix)
 }
 ````
 
-Since pre-request scripts runs from outermost folder first we sadly cannot stop it running once on the wrong clientHmacPrefix everytime we go to a new service. It should be noted we tried to throw exception on the pre-request script above if we detected a different clientHmacPrefix than we desired. But then it never saved the value to the environment.
-Instead we have stored a variable named changedClientHmacPrefix if we detected so on each folder/request where we put the above script to set the *clientHmacPrefix* we can also add a simple test script that looks if we changed the value and then warns us to rerun the request again.
+Since pre-request scripts runs outermost folder first the first run on a new service will be with the old clientHmacPrefix. Throwing an error in the pre-request script that changes the clientHmacPrefix stopped the value from being persisted.
+Instead we have stored a variable named changedClientHmacPrefix which is true when we detected change to remind us to rerun the request.
+Place this on the same collection/folder as the main pre-request script but on the test tab (it will be run after the request)
 
 ```js
 var changed = pm.variables.get('changedClientHmacPrefix');
