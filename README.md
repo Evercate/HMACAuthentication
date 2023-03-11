@@ -145,7 +145,11 @@ function getAuthHeader(httpMethod, requestUrl, requestBody) {
     if(CLIENT_KEY == null || SECRET_KEY == null)
     {
         console.error("No key/secret pair was found. Make sure you have " + clientKeyVariableName + " and " + clientSecretVariableName + "as variables (environment or otherwise). Note you can also have a prefix to have multiple variables in the same environment");
-        throw new Error("Missing key/secret see console for more");
+        return;
+    }
+    else
+    {
+        console.log("Found key '" + CLIENT_KEY + "' and secret '" + SECRET_KEY + "'");
     }
 
 
