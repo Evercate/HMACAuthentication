@@ -128,18 +128,22 @@ function getAuthHeader(httpMethod, requestUrl, requestBody) {
     pm.variables.set('nonce', nonce);
     var signature = generate(date, requestBody, httpMethod.toLowerCase(), requestPath, queryString, nonce);
 
-    utfSignature = crypto-js.enc.Utf8.parse(signature);
-    hmacDigest = crypto-js.enc.Base64.stringify(crypto-js.HmacSHA256(utfSignature, SECRET_KEY));
+    utfSignature = require('crypto-js').enc.Utf8.parse(signature);
+    hmacDigest = require('crypto-js').enc.Base64.stringify(require('crypto-js').HmacSHA256(utfSignature, SECRET_KEY));
 
     var authHeader = AUTH_TYPE + ' ' + CLIENT_KEY + ':' + hmacDigest;
     return authHeader;
 }
 
+// Set up request body based on the body mode
 var requestBody = '';
 if (pm.request.body) {
     switch (pm.request.body.mode) {
         case 'raw':
             requestBody = pm.request.body.raw;
+            if (pm.request.headers.get("Content-Type") === "application/json") {
+                requestBody = JSON.stringify(JSON.parse(requestBody));
+            }
             break;
         case 'urlencoded':
             requestBody = pm.request.body.urlencoded.toString();
