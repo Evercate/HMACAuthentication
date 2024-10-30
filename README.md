@@ -109,49 +109,12 @@ function getQueryString(url) {
 
 function getAuthHeader(httpMethod, requestUrl, requestBody) {
 
-    var ENVIRONMENT_HMAC_PREFIX_KEY = pm.variables.get("clientHmacPrefix");
 
-    var CLIENT_KEY = null;
-    var SECRET_KEY = null;
+    var CLIENT_KEY = pm.variables.get("clientKey");
+    var SECRET_KEY = pm.variables.get("clientSecret");
     var AUTH_TYPE = 'HMAC';
 
-    var clientKeyVariableName = "clientKey";
-    var clientSecretVariableName = "clientSecret";
-
-    if(ENVIRONMENT_HMAC_PREFIX_KEY != null)
-    {
-        var prefixedClientKey = ENVIRONMENT_HMAC_PREFIX_KEY + clientKeyVariableName;
-        var prefixedSecretKey = ENVIRONMENT_HMAC_PREFIX_KEY + clientSecretVariableName;
-
-        console.log("The clientHmacPrefix '" + ENVIRONMENT_HMAC_PREFIX_KEY + "' was found, looking up '" + prefixedClientKey + "' and '" + prefixedSecretKey + "'");
-
-        CLIENT_KEY = pm.variables.get(prefixedClientKey);
-        SECRET_KEY = pm.variables.get(prefixedSecretKey);
-
-        if(CLIENT_KEY == null || SECRET_KEY == null)
-        {
-            console.log("No variables found with the names of " + prefixedClientKey + "/" + prefixedSecretKey + ". We will look up keys with the default names");
-        }
-    }
-
-    if(CLIENT_KEY == null || SECRET_KEY == null)
-    {
-        CLIENT_KEY = pm.variables.get(clientKeyVariableName);
-        SECRET_KEY = pm.variables.get(clientSecretVariableName);
-
-        console.log("We fetched the key/secret with " + clientKeyVariableName + "/" + clientSecretVariableName + " variable names. Key was: '" + CLIENT_KEY + "' and secret was: '" + SECRET_KEY + "'")
-    }
-
-    if(CLIENT_KEY == null || SECRET_KEY == null)
-    {
-        console.error("No key/secret pair was found. Make sure you have " + clientKeyVariableName + " and " + clientSecretVariableName + "as variables (environment or otherwise). Note you can also have a prefix to have multiple variables in the same environment");
-        return;
-    }
-    else
-    {
-        console.log("Found key '" + CLIENT_KEY + "' and secret '" + SECRET_KEY + "'");
-    }
-
+    console.log("clientKey: "+ CLIENT_KEY);
 
     var requestPath = getPath(requestUrl);
     var queryString = getQueryString(requestUrl);
@@ -165,16 +128,31 @@ function getAuthHeader(httpMethod, requestUrl, requestBody) {
     pm.variables.set('nonce', nonce);
     var signature = generate(date, requestBody, httpMethod.toLowerCase(), requestPath, queryString, nonce);
 
-    utfSignature = CryptoJS.enc.Utf8.parse(signature);
-    hmacDigest = CryptoJS.enc.Base64.stringify(CryptoJS.HmacSHA256(utfSignature, SECRET_KEY));
+    utfSignature = crypto-js.enc.Utf8.parse(signature);
+    hmacDigest = crypto-js.enc.Base64.stringify(crypto-js.HmacSHA256(utfSignature, SECRET_KEY));
 
     var authHeader = AUTH_TYPE + ' ' + CLIENT_KEY + ':' + hmacDigest;
     return authHeader;
 }
 
-pm.variables.set('hmacAuthHeader', getAuthHeader(request['method'], request['url'], request['data']));
+var requestBody = '';
+if (pm.request.body) {
+    switch (pm.request.body.mode) {
+        case 'raw':
+            requestBody = pm.request.body.raw;
+            break;
+        case 'urlencoded':
+            requestBody = pm.request.body.urlencoded.toString();
+            break;
+        case 'formdata':
+            requestBody = pm.request.body.formdata.toString();
+            break;
+        default:
+            requestBody = '';
+    }
+}
 
-
+pm.variables.set('hmacAuthHeader', getAuthHeader(pm.request.method, pm.request.url.toString(), requestBody));
 ````
 
 #### Multiple keys in one environment
