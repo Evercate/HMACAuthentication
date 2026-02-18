@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -21,6 +21,7 @@ namespace HMACAuthentication.Authentication
         private readonly ISecretLookup lookup;
         private readonly IMemoryCache cache;
 
+#if NETSTANDARD2_0
         public HMACAuthenticationHandler(IOptionsMonitor<HMACAuthenticationOptions> options,
                                          ILoggerFactory logger,
                                          UrlEncoder encoder,
@@ -32,6 +33,18 @@ namespace HMACAuthentication.Authentication
             this.lookup = lookup ?? throw new ArgumentNullException(nameof(lookup));
             this.cache = cache;
         }
+#else
+        public HMACAuthenticationHandler(IOptionsMonitor<HMACAuthenticationOptions> options,
+                                         ILoggerFactory logger,
+                                         UrlEncoder encoder,
+                                         ISecretLookup lookup,
+                                         IMemoryCache cache)
+            : base(options, logger, encoder)
+        {
+            this.lookup = lookup ?? throw new ArgumentNullException(nameof(lookup));
+            this.cache = cache;
+        }
+#endif
 
         protected async override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
@@ -43,20 +56,25 @@ namespace HMACAuthentication.Authentication
             if (!DateTimeOffset.TryParseExact(Request.Headers[DateHeader], "r", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal, out DateTimeOffset requestDate))
                 return AuthenticateResult.Fail("Unable to parse Date header");
 
-            if (requestDate > Clock.UtcNow.Add(Options.AllowedDateDrift) || requestDate < Clock.UtcNow.Subtract(Options.AllowedDateDrift))
+#if NETSTANDARD2_0
+            var utcNow = Clock.UtcNow;
+#else
+            var utcNow = DateTimeOffset.UtcNow;
+#endif
+            if (requestDate > utcNow.Add(Options.AllowedDateDrift) || requestDate < utcNow.Subtract(Options.AllowedDateDrift))
                 return AuthenticateResult.Fail("Date drifted more than allowed, adjust your time settings.");
 
             var nonce = Request.Headers[NonceHeader];
 
             if (!string.IsNullOrEmpty(nonce))
             {
-                if (cache.TryGetValue(nonce, out string _))
+                if (cache.TryGetValue(nonce, out string? _))
                 {
                     return AuthenticateResult.Fail("This message has already been processed");
                 }
 
                 //At two times the allowed drift the nonce cache will make sure we never have a repeat message within the allowed drift and outside the allowed drift the message will be invalid due to drift
-                cache.Set<string>(nonce, nonce, TimeSpan.FromTicks(Options.AllowedDateDrift.Ticks * 2));
+                cache.Set<string>(nonce!, nonce!, TimeSpan.FromTicks(Options.AllowedDateDrift.Ticks * 2));
             }
 
             // Lookup and verify secret
@@ -70,7 +88,7 @@ namespace HMACAuthentication.Authentication
             }
 
             // Check signature
-            string serverSignature = SignatureHelper.Calculate(secret, SignatureHelper.Generate(requestDate, await StreamToStringAsync(Request), Request.Method, Request.Path, Request.QueryString.Value, nonce.ToString())); ;
+            string serverSignature = SignatureHelper.Calculate(secret, SignatureHelper.Generate(requestDate, await StreamToStringAsync(Request), Request.Method, Request.Path, Request.QueryString.Value, nonce.ToString()));
             Logger.LogDebug("Calculated server side signature {signature}", serverSignature);
 
             if (serverSignature.Equals(header.Value.signature))
@@ -116,10 +134,8 @@ namespace HMACAuthentication.Authentication
                 // Reset the request body stream position so the next middleware can read it
                 request.Body.Position = 0;
             }
-            
+
             return requestPayload;
-            
-            
         }
     }
 }

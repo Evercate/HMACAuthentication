@@ -11,6 +11,6 @@ namespace HMACAuthentication.Authentication
 
         public TimeSpan AllowedDateDrift { get; set; } = TimeSpan.FromMinutes(5);
 
-        public Func<string, string[]> GetRolesForId { get; set; }
+        public Func<string, string[]>? GetRolesForId { get; set; }
     }
 }
