@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet --list-sdks:*)",
+      "WebSearch",
+      "Bash(dotnet package search:*)",
+      "WebFetch(domain:api.nuget.org)",
+      "WebFetch(domain:www.nuget.org)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet pack:*)"
+    ]
+  }
+}

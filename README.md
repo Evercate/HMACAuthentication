@@ -52,14 +52,24 @@ var request = new HttpRequestMessage(new HttpMethod("POST"), "YOUR_ENDPOINT");
 SignatureHelper.SetHmacHeaders(request, "YOUR_APPLICATION_ID", "YOUR_SECRET_KEY", "PAYLOAD");
 ```
 
-# Build as nuget package
-1. Build project as normal (Release)
-2. Bump the version in the nuspec file
-3. Use CMD in project dir and run `.\nuget.exe pack -Prop Configuration=Release`
-4. Run `.\nuget.exe push {package file} {apikey} -Source {nuget server url}`
+# Build and publish NuGet package
+Run the build script from the `HMACAuthentication` solution directory:
+```powershell
+.\BuildAndPublish.ps1
+```
 
-# Use package from Nuget
-https://www.nuget.org/packages/Evercate.HMACAuthentication
+The script will:
+1. Auto-increment the patch version (or let you specify a version manually)
+2. Build and pack the project
+3. Push to GitHub Packages
+
+**Prerequisites:** Create a `NugetKey.txt` file in the solution directory containing a GitHub Personal Access Token (classic) with `write:packages` scope.
+
+# Install package from GitHub Packages
+```
+dotnet nuget add source "https://nuget.pkg.github.com/Evercate/index.json" --name "evercate_github" --username YOUR_GITHUB_USERNAME --password YOUR_GITHUB_PAT
+dotnet add package Evercate.HMACAuthentication
+```
 
 
 -----------------------------------
