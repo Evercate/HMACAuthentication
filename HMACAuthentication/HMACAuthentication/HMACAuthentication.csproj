@@ -7,13 +7,13 @@
 
     <!-- NuGet package metadata (replaces .nuspec) -->
     <PackageId>Evercate.HMACAuthentication</PackageId>
-    <Version>3.0.0</Version>
+    <Version>3.0.1</Version>
     <Title>HMAC</Title>
     <Authors>Andrey Krichtal, Rickard Liljeberg</Authors>
     <Description>HMAC authentication implementation for ASP.NET Core</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>HMAC Authentication</PackageTags>
-    <PackageReleaseNotes>Multi-target netstandard2.0 + net10.0. Published to GitHub Packages.</PackageReleaseNotes>
+    <PackageReleaseNotes>Updated to o.net 10</PackageReleaseNotes>
     <RepositoryUrl>https://github.com/Evercate/HMACAuthentication</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>

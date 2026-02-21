@@ -343,3 +343,4 @@ healthchecksdb
 /QueueService.Api/appsettings.Development.json
 /Build
 /QueueService.Api/NLog.config.Development.json
+HMACAuthentication/NugetKey.txt
