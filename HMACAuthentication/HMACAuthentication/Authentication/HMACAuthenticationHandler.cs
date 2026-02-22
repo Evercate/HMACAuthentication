@@ -21,19 +21,6 @@ namespace HMACAuthentication.Authentication
         private readonly ISecretLookup lookup;
         private readonly IMemoryCache cache;
 
-#if NETSTANDARD2_0
-        public HMACAuthenticationHandler(IOptionsMonitor<HMACAuthenticationOptions> options,
-                                         ILoggerFactory logger,
-                                         UrlEncoder encoder,
-                                         ISystemClock clock,
-                                         ISecretLookup lookup,
-                                         IMemoryCache cache)
-            : base(options, logger, encoder, clock)
-        {
-            this.lookup = lookup ?? throw new ArgumentNullException(nameof(lookup));
-            this.cache = cache;
-        }
-#else
         public HMACAuthenticationHandler(IOptionsMonitor<HMACAuthenticationOptions> options,
                                          ILoggerFactory logger,
                                          UrlEncoder encoder,
@@ -44,7 +31,6 @@ namespace HMACAuthentication.Authentication
             this.lookup = lookup ?? throw new ArgumentNullException(nameof(lookup));
             this.cache = cache;
         }
-#endif
 
         protected async override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
@@ -56,11 +42,7 @@ namespace HMACAuthentication.Authentication
             if (!DateTimeOffset.TryParseExact(Request.Headers[DateHeader], "r", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal, out DateTimeOffset requestDate))
                 return AuthenticateResult.Fail("Unable to parse Date header");
 
-#if NETSTANDARD2_0
-            var utcNow = Clock.UtcNow;
-#else
             var utcNow = DateTimeOffset.UtcNow;
-#endif
             if (requestDate > utcNow.Add(Options.AllowedDateDrift) || requestDate < utcNow.Subtract(Options.AllowedDateDrift))
                 return AuthenticateResult.Fail("Date drifted more than allowed, adjust your time settings.");
 

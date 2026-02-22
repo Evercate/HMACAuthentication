@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
 
@@ -13,19 +13,12 @@
     <Description>HMAC authentication implementation for ASP.NET Core</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>HMAC Authentication</PackageTags>
-    <PackageReleaseNotes>Updated to o.net 10</PackageReleaseNotes>
+    <PackageReleaseNotes>Removed netstandard2.0, now targets .NET 10 only</PackageReleaseNotes>
     <RepositoryUrl>https://github.com/Evercate/HMACAuthentication</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
-  <!-- netstandard2.0: use NuGet packages (old .NET Core / .NET 5-7) -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.3.9" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.3" />
-  </ItemGroup>
-
-  <!-- net10.0: use shared framework (ASP.NET Core is built-in) -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+  <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
